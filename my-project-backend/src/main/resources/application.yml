@@ -15,3 +15,9 @@ spring:
       origin: '*'
       credentials: false
       methods: '*'
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 5000
+#      password: 123456
