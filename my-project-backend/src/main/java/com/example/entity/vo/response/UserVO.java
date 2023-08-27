@@ -5,7 +5,8 @@ import lombok.Data;
 @Data
 public class UserVO {
 
-    private String   date;
-    private String     name;
-    private String     address;
+    private String username;
+    private String userProfile;
+    private String userAvatar;
+    private String userRole;
 }

@@ -2,16 +2,18 @@ package com.example.config;
 
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.example.entity.RestBean;
-import com.example.entity.dto.AccountDTO;
-import com.example.entity.vo.response.AuthorizeVO;
+import com.example.entity.dto.UserDTO;
+import com.example.entity.vo.response.LoginUserVO;
 import com.example.filter.JwtAuthorizeFilter;
-import com.example.service.AccountService;
+import com.example.service.UserService;
+import com.example.utils.Constant;
 import com.example.utils.JwtUtils;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -34,7 +36,11 @@ public class SecurityConfiguration {
     JwtAuthorizeFilter jwtAuthorizeFilter;
 
     @Resource
-    AccountService accountService;
+    UserService userService;
+
+
+    @Resource
+    private StringRedisTemplate template;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -62,16 +68,18 @@ public class SecurityConfiguration {
             writer.write(RestBean.unauthorized(exception.getMessage()).asJsonString());
         } else if (exceptionOrAuthentication instanceof Authentication authentication) {
             User user = (User) authentication.getPrincipal();
-            AccountDTO account = accountService.findAccountByNameOrEmail(user.getUsername());
-            String token = jwtUtils.createJwt(user, account.getId(), account.getUsername());
+            UserDTO userDTO = userService.findUserByUserAccount(user.getUsername());
+            String token = jwtUtils.createJwt(user, userDTO.getId(), userDTO.getUserAccount());
             if (StringUtils.isBlank(token)) {
                 writer.write(RestBean.forbidden("登录验证频繁,请稍后再试").asJsonString());
             } else {
-                AuthorizeVO authorizeVO = account.asViewObject(AuthorizeVO.class, v -> {
+                LoginUserVO loginUserVO = userDTO.asViewObject(LoginUserVO.class, v -> {
                     v.setExpire(jwtUtils.expireTime());
                     v.setToken(token);
                 });
-                writer.write(RestBean.success(authorizeVO).asJsonString());
+                template.opsForValue().set(Constant.LOGIN_USER + token,loginUserVO.getUserAccount());
+//                request.getSession().setAttribute(Constant.LOGIN_USER, loginUserVO);
+                writer.write(RestBean.success(loginUserVO).asJsonString());
             }
         }
     }

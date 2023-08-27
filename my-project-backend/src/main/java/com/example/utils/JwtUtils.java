@@ -40,18 +40,19 @@ public class JwtUtils {
         try {
             DecodedJWT jwt = jwtVerifier.verify(token);
             String id = jwt.getId();
-            return deleteToken(id, jwt.getExpiresAt());
+            return deleteToken(id, jwt.getExpiresAt(),token);
         } catch (JWTVerificationException e) {
             return false;
         }
     }
 
-    private boolean deleteToken(String uuid, Date time) {
+    private boolean deleteToken(String uuid, Date time,String token) {
         if (this.isInvalidToken(uuid))
             return false;
         Date now = new Date();
         long expire = Math.max(time.getTime() - now.getTime(),0);
         template.opsForValue().set(Constant.JWT_BLACK_LIST + uuid ,"",expire, TimeUnit.MILLISECONDS);
+        template.delete(Constant.LOGIN_USER + token);
         return true;
     }
 
@@ -112,7 +113,7 @@ public class JwtUtils {
         return claims.get("id").asLong();
     }
 
-    private String convertToken(String headerToken) {
+    public String convertToken(String headerToken) {
         if (headerToken == null || !headerToken.startsWith("Bearer")) {
             return null;
         }

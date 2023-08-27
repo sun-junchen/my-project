@@ -2,6 +2,7 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import WelcomeView from '../views/WelcomeView.vue'
 import LoginPage from '../views/welcome/LoginPage.vue'
+import RegisterPage from '../views/welcome/RegisterPage.vue'
 import IndexView from '../views/IndexView.vue'
 import { unauthorized } from '@/plugins/myAxios'
 
@@ -15,6 +16,11 @@ const routes: Array<RouteRecordRaw> = [
         path: '',
         name: 'welcome-login',
         component: () => LoginPage
+      },
+      {
+        path: '/register',
+        name: 'welcome-register',
+        component: () => RegisterPage
       }
     ]
   },
